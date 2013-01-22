@@ -1,9 +1,108 @@
 import os
+import urllib2
+import json
+import base64
 from selenium import webdriver
 from selenium import selenium
 
-from ParseSauceURL import *
-from SauceRest import *
+class ParseSauceURL:
+    def __init__(self, url):
+        self.url = url
+
+        self.fields = {}
+        fields = self.url.split(':')[1][1:].split('&')
+        for field in fields:
+            [key, value] = field.split('=')
+            self.fields[key] = value
+
+    def getValue(self, key):
+        if key in self.fields:
+            return self.fields[key]
+        else:
+            return ""
+
+    def getUserName(self):
+        return self.getValue("username")
+
+    def getAccessKey(self):
+        return self.getValue("access-key")
+
+    def getJobName(self):
+        return self.getValue("job-name")
+
+    def getOS(self):
+        return self.getValue("os")
+
+    def getBrowser(self):
+        return self.getValue('browser')
+
+    def getBrowserVersion(self):
+        return self.getValue('browser-version')
+
+    def getFirefoxProfileURL(self):
+        return self.getValue('firefox-profile-url')
+
+    def getMaxDuration(self):
+        try:
+            return int(self.getValue('max-duration'))
+        except:
+            return 0
+
+    def getIdleTimeout(self):
+        try:
+            return int(self.getValue('idle-timeout'))
+        except:
+            return 0
+
+    def getUserExtensionsURL(self):
+        return self.getValue('user-extensions-url')
+
+    def toJSON(self):
+        return json.dumps(self.fields, sort_keys=False)
+
+
+url = 'https://saucelabs.com/rest/%s/%s/%s'
+
+"""
+This class provides several helper methods to invoke the Sauce REST API.
+"""
+class SauceRest:
+    def __init__(self, user, key):
+        self.user = user
+        self.key = key
+
+    def buildUrl(self, version, suffix):
+        return url %(version, self.user, suffix)
+
+    """
+    Updates a Sauce Job with the data contained in the attributes dict
+    """
+    def update(self, id, attributes):
+        url = self.buildUrl("v1", "jobs/" + id)
+        data = json.dumps(attributes)
+        return self.invokePut(url, self.user, self.key, data)
+
+    """
+    Retrieves the details for a Sauce job in JSON format
+    """
+    def get(self, id):
+        url = self.buildUrl("v1", "jobs/" + id)
+        return self.invokeGet(url, self.user, self.key)
+
+    def invokePut(self, theurl, username, password, data):
+        request = urllib2.Request(theurl, data, {'content-type': 'application/json'})
+        base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
+        request.add_header("Authorization", "Basic %s" % base64string)
+        request.get_method = lambda: 'PUT'
+        htmlFile = urllib2.urlopen(request)
+        return htmlFile.read()
+
+    def invokeGet(self, theurl, username, password):
+        request = urllib2.Request(theurl)
+        base64string = base64.encodestring('%s:%s' % (username, password))[:-1]
+        request.add_header("Authorization", "Basic %s" % base64string)
+        htmlFile = urllib2.urlopen(request)
+        return htmlFile.read()
 
 """
 This class wraps a webdriver/selenium instance.  It delegates most method calls to the underlying webdriver/selenium
@@ -48,15 +147,15 @@ class Wrapper:
         return setattr(self.selenium, attr, value)
 
 """
-  Simple interface factory to create Selenium objects, inspired by the SeleniumFactory interface 
+  Simple interface factory to create Selenium objects, inspired by the SeleniumFactory interface
   from https://github.com/infradna/selenium-client-factory for Java.
- 
+
   <p>
   Compared to directly initializing {@link com.thoughtworks.selenium.DefaultSelenium}, this additional indirection
   allows the build script or a CI server to control how you connect to the selenium.
   This makes it easier to run the same set of tests in different environments without
   modifying the test code.
- 
+
   <p>
   This is analogous to how you connect to JDBC &mdash; you normally don't directly
   instantiate a specific driver, and instead you do {@link DriverManager#getConnection(String)}.
@@ -157,4 +256,6 @@ class SeleniumFactory:
             return wrapper
 
         else:
-            return webdriver.Firefox()
+            driver = webdriver.Firefox()
+            driver.get(startingUrl)
+            return driver
