@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='python-seleniumfactory',
-    version='0.1',
+    version='0.2',
     description="Python SeleniumFacotry",
     long_description="""
 Simple interface factory to create Selenium objects, inspired by

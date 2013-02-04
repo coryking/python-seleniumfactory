@@ -250,12 +250,10 @@ class SeleniumFactory:
                 desired_capabilities['idle-timeout'] = parse.getIdleTimeout()
 
             driver=webdriver.Remote(desired_capabilities=desired_capabilities, command_executor=command_executor)
-            driver.get(startingUrl)
             wrapper = Wrapper(driver, parse)
             wrapper.dump_session_id()
             return wrapper
 
         else:
             driver = webdriver.Firefox()
-            driver.get(startingUrl)
             return driver
