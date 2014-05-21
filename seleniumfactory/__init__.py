@@ -6,7 +6,7 @@ from selenium import webdriver
 from selenium import selenium
 
 class ParseSauceURL:
-    def __init__(self, url):
+    def __init__(self, url, overrides=None):
         self.url = url
 
         self.fields = {}
@@ -14,6 +14,8 @@ class ParseSauceURL:
         for field in fields:
             [key, value] = field.split('=')
             self.fields[key] = value
+        if overrides:
+            self.fields.update(overrides)
 
     def getValue(self, key):
         if key in self.fields:
@@ -169,14 +171,11 @@ class SeleniumFactory:
      and run the test against the domain specified in 'SELENIUM_URL' system property or the environment variable.
      If no variables exist, a local Selenium driver is created.
     """
-    def create(self):
-        if 'SELENIUM_STARTING_URL' not in os.environ:
-            startingUrl = "http://saucelabs.com"
-        else:
-            startingUrl = os.environ['SELENIUM_STARTING_URL']
+    def create(self, overrides=None):
+        startingUrl = os.getenv('SELENIUM_STARTING_URL', "http://saucelabs.com")
 
         if 'SELENIUM_DRIVER' in os.environ and  'SELENIUM_HOST' in os.environ and 'SELENIUM_PORT' in os.environ:
-            parse = ParseSauceURL(os.environ["SELENIUM_DRIVER"])
+            parse = ParseSauceURL(os.environ["SELENIUM_DRIVER"], overrides=overrides)
             driver = selenium(os.environ['SELENIUM_HOST'], os.environ['SELENIUM_PORT'], parse.toJSON(), startingUrl)
             driver.start()
 
@@ -196,14 +195,11 @@ class SeleniumFactory:
      and run the test against the domain specified in 'SELENIUM_STARTING_URL' system property or the environment variable.
      If no variables exist, a local Selenium web driver is created.
     """
-    def createWebDriver(self):
-        if 'SELENIUM_STARTING_URL' not in os.environ:
-            startingUrl = "http://saucelabs.com"
-        else:
-            startingUrl = os.environ['SELENIUM_STARTING_URL']
+    def createWebDriver(self, overrides=None):
+        startingUrl = os.getenv('SELENIUM_STARTING_URL', "http://saucelabs.com")
 
         if 'SELENIUM_DRIVER' in os.environ and 'SELENIUM_HOST' in os.environ and 'SELENIUM_PORT' in os.environ:
-            parse = ParseSauceURL(os.environ["SELENIUM_DRIVER"])
+            parse = ParseSauceURL(os.environ["SELENIUM_DRIVER"], overrides=overrides)
 
             desired_capabilities = {}
             if parse.getBrowser() == 'android':

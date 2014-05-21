@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 from selenium import webdriver
 import unittest, time, re
 import os
 
-from ParseSauceURL import *
-from SeleniumFactory import *
+from seleniumfactory import ParseSauceURL
+from seleniumfactory import SeleniumFactory
 
 class testParseSauceURL(unittest.TestCase):
 	def setUp(self):
@@ -22,6 +23,18 @@ class testParseSauceURL(unittest.TestCase):
 		self.assertEqual(90, parse.getIdleTimeout())
 		self.assertEqual("", parse.getUserExtensionsURL())
 
+	def test_parse_overrides(self):
+		parse = ParseSauceURL(self.url, {'job-name': 'not so simple', 'os': 'BeOS'})
+		self.assertEqual("foobar", parse.getUserName())
+		self.assertEqual("1234-5678-9102-3456", parse.getAccessKey())
+		self.assertEqual("not so simple", parse.getJobName())
+		self.assertEqual("BeOS", parse.getOS())
+		self.assertEqual("firefox", parse.getBrowser())
+		self.assertEqual("7", parse.getBrowserVersion())
+		self.assertEqual("", parse.getFirefoxProfileURL())
+		self.assertEqual(300, parse.getMaxDuration())
+		self.assertEqual(90, parse.getIdleTimeout())
+		self.assertEqual("", parse.getUserExtensionsURL())
 
 
 class testSelenium2(unittest.TestCase):

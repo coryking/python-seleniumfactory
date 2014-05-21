@@ -22,6 +22,7 @@ configuration.
     license='Unknown',
     platforms=['any'],
     packages=find_packages(),
+    install_requires=['selenium'],
     classifiers=[
         'Development Status :: 1 - Prerelease',
         'Environment :: Web Environment',
